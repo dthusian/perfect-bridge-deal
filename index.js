@@ -6,6 +6,7 @@ const RCON_IP = process.env["RCON_IP"];
 const RCON_PORT = process.env["RCON_PORT"];
 const RCON_PASSWD = process.env["RCON_PASSWD"];
 const DISCORD_TOKEN = process.env["DISCORD_TOKEN"];
+const LOG_PARSE_PROFILE = process.env["LOG_PARSE_PROFILE"] || "vanilla";
 
 /// Config Options End
 
@@ -13,7 +14,12 @@ const DISCORD_TOKEN = process.env["DISCORD_TOKEN"];
 
 function lineFilter(line) {
   // Chat messages
-  if(line.includes("INFO]: <")) {
+  if(line.includes(
+    ({
+      vanilla: "INFO]: <",
+      forge: "[minecraft/DedicatedServer]: <"
+    })[LOG_PARSE_PROFILE]
+  )) {
     return {
       author: line.substring(line.indexOf("<") + 1, line.indexOf(">")),
       content: line.substring(line.indexOf(">") + 2)
