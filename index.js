@@ -17,7 +17,7 @@ function lineFilter(line) {
   if(line.includes(
     ({
       vanilla: "INFO]: <",
-      forge: "[minecraft/DedicatedServer]: <"
+      forge: "DedicatedServer/]: <"
     })[LOG_PARSE_PROFILE]
   )) {
     return {
