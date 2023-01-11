@@ -1,0 +1,5 @@
+bridge*.env
+node_modules
+*.img
+*.tar
+v2/
