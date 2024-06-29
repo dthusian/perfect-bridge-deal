@@ -6,11 +6,35 @@ const RCON_IP = process.env["RCON_IP"];
 const RCON_PORT = process.env["RCON_PORT"];
 const RCON_PASSWD = process.env["RCON_PASSWD"];
 const DISCORD_TOKEN = process.env["DISCORD_TOKEN"];
+const LANG_FILE = process.env["LANG_FILE"]; // used to extract death messages
 const LOG_PARSE_PROFILE = process.env["LOG_PARSE_PROFILE"] || "vanilla";
 
 /// Config Options End
 
 /// Line Filtering Logic
+
+function parseLangFile() {
+  const langFile = JSON.parse(LANG_FILE);
+  const keys = Object.keys(langFile);
+  return Array.from(keys)
+    .filter(v => v.startsWith("death."))
+    .map(v => {
+      ("" + langFile[keys])
+        .split(" ")
+        .map(v => {
+          if(v.startsWith("%")) {
+            return "\\S+"
+          } else {
+            return v;
+          }
+        })
+        .join("\s+");
+    })
+    .map(v => new RegExp(v))
+}
+const deathMessageRegexes = parseLangFile();
+deathMessageRegexes.push(/joined the game/);
+deathMessageRegexes.push(/left the game/);
 
 function lineFilter(line) {
   // Chat messages
@@ -25,69 +49,8 @@ function lineFilter(line) {
       content: line.substring(line.indexOf(">") + 2)
     };
   }
-  // Lines containing a known death message (or the join/leave message) are relevant
-  const include = [
-    "was shot by",
-    "was pummeled by",
-    "was pricked to death",
-    "walked into a cactus",
-    "drowned", // i hope builtin logs don't have this
-    "experienced kinetic energy",
-    "blew up",
-    "was blown up by",
-    "was killed by [Intentional Game Design]", // :trolley:
-    "hit the ground too hard",
-    "fell from a high place",
-    "fell off a ladder",
-    "fell off some vines",
-    "fell off some weeping vines",
-    "fell off some twisting vines",
-    "fell off scaffolding",
-    "fell while climbing",
-    "was impaled on a stalagmite",
-    "was squashed by a falling anvil",
-    "was squashed by a falling block",
-    "was skewered by a falling stalactite",
-    "went up in flames",
-    "walked into fire",
-    "burned to death",
-    "was burnt to a crisp",
-    "went off with a bang",
-    "tried to swim in lava", 
-    "was struck by lightning",
-    "discovered the floor was lava",
-    "walked into danger zone due to",
-    "was killed by magic",
-    "using magic",
-    "was killed by",
-    "froze to death",
-    "was frozen to death by",
-    "was slain by",
-    "was fireballed by",
-    "was stung to death",
-    "was shot by a skull from",
-    "starved to death",
-    "suffocated in a wall",
-    "was squished too much",
-    "was squashed by",
-    "was poked to death by a sweet berry bush",
-    "was killed trying to hurt",
-    "trying to hurt",
-    "was impaled by",
-    "fell out of the world",
-    "didn't want to live in the same world as",
-    "withered away",
-    "died from dehydration",
-    "left the game",
-    "joined the game",
-    "has made the advancement",
-    "has completed the challenge"
-  ];
-  // Villager death messages are printed to logs for some reason
-  // Their death message is printed way after the debug info, ensure
-  // if the death message isn't close enough to the beginning of the string,
-  // reject
-  if(line.includes("[Server thread/INFO]") && include.some(v => line.includes(v) && line.indexOf(v) < 60)) {
+  
+  if(line.includes("[Server thread/INFO]") && deathMessageRegexes.some(v => v.test(line))) {
     return {
       author: "",
       content: line.substring(line.lastIndexOf("]: ") + 3)
