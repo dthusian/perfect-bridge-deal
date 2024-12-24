@@ -14,12 +14,12 @@ const LOG_PARSE_PROFILE = process.env["LOG_PARSE_PROFILE"] || "vanilla";
 /// Line Filtering Logic
 
 function parseLangFile() {
-  const langFile = JSON.parse(LANG_FILE);
+  const langFile = JSON.parse(require("fs").readFileSync(LANG_FILE));
   const keys = Object.keys(langFile);
   return Array.from(keys)
     .filter(v => v.startsWith("death."))
     .map(v => {
-      ("" + langFile[keys])
+      return ("" + langFile[v])
         .split(" ")
         .map(v => {
           if(v.startsWith("%")) {
@@ -28,13 +28,14 @@ function parseLangFile() {
             return v;
           }
         })
-        .join("\s+");
+        .join("\\s+");
     })
     .map(v => new RegExp(v))
 }
 const deathMessageRegexes = parseLangFile();
 deathMessageRegexes.push(/joined the game/);
 deathMessageRegexes.push(/left the game/);
+deathMessageRegexes.push(/has made the/);
 
 function lineFilter(line) {
   // Chat messages
